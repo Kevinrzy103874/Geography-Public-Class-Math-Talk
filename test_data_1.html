@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes, viewport-fit=cover">
+  <title>小店营业额 · 每日动态看板</title>
+  <!-- Chart.js 轻量图表库 -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: #f8fafc;
+      font-family: 'Inter', 'Segoe UI', Roboto, system-ui, -apple-system, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 1.5rem;
+      margin: 0;
+      background: linear-gradient(145deg, #f1f5f9 0%, #e6edf5 100%);
+    }
+
+    .dashboard {
+      width: 100%;
+      max-width: 1300px;
+      background: rgba(255,255,255,0.8);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      background: #ffffff;
+      border-radius: 2.5rem;
+      box-shadow: 0 30px 60px rgba(0, 0, 0, 0.08), 0 12px 24px rgba(0, 20, 40, 0.06);
+      padding: 2rem 1.8rem 2.2rem;
+      transition: all 0.2s ease;
+      border: 1px solid rgba(255,255,255,0.5);
+    }
+
+    .header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      justify-content: space-between;
+      margin-bottom: 1.8rem;
+      gap: 1rem;
+    }
+
+    .title-section h1 {
+      font-size: clamp(1.8rem, 5vw, 2.4rem);
+      font-weight: 600;
+      letter-spacing: -0.5px;
+      color: #0f172a;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .title-section h1 span {
+      background: #2563eb;
+      color: white;
+      font-size: 1rem;
+      font-weight: 500;
+      padding: 0.2rem 1rem;
+      border-radius: 40px;
+      letter-spacing: 0.3px;
+      margin-left: 0.4rem;
+      background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    }
+
+    .live-indicator {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: #f1f5f9;
+      padding: 0.6rem 1.4rem;
+      border-radius: 3rem;
+      font-weight: 500;
+      color: #1e293b;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.02);
+      backdrop-filter: blur(4px);
+    }
+
+    .pulse {
+      width: 10px;
+      height: 10px;
+      background: #10b981;
+      border-radius: 50%;
+      box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+      animation: pulse-ring 1.8s infinite;
+    }
+
+    @keyframes pulse-ring {
+      0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+      70% { box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+    }
+
+    /* 响应式卡片：当前选中日期的营业额显示 */
+    .value-card {
+      background: #ffffff;
+      border-radius: 1.8rem;
+      padding: 1.3rem 1.8rem;
+      margin-bottom: 1.8rem;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.04);
+      border: 1px solid #edf2f7;
+      background: #f9fafc;
+    }
+
+    .day-badge {
+      display: flex;
+      align-items: baseline;
+      gap: 0.8rem;
+      flex-wrap: wrap;
+    }
+
+    .day-label {
+      font-size: 1rem;
+      font-weight: 500;
+      color: #475569;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .day-number {
+      font-size: 2.2rem;
+      font-weight: 700;
+      color: #0f172a;
+      line-height: 1.2;
+    }
+
+    .revenue-highlight {
+      background: linear-gradient(to right, #2563eb, #1e40af);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      font-size: 2.8rem;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      display: flex;
+      align-items: baseline;
+      gap: 0.3rem;
+    }
+
+    .revenue-highlight small {
+      font-size: 1.2rem;
+      font-weight: 500;
+      background: none;
+      -webkit-text-fill-color: #64748b;
+      background-clip: unset;
+      margin-right: 0.2rem;
+    }
+
+    .chart-container {
+      position: relative;
+      width: 100%;
+      height: auto;
+      margin: 0.5rem 0 0.8rem;
+      background: #ffffff;
+      border-radius: 1.8rem;
+      padding: 1.2rem 0.5rem 0.8rem;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.02);
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: auto;
+      max-height: 450px;
+      min-height: 280px;
+    }
+
+    /* 滑块区域：手动选择某一天查看 */
+    .slider-control {
+      margin-top: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .range-wrap {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    input[type="range"] {
+      flex: 2;
+      min-width: 200px;
+      height: 8px;
+      -webkit-appearance: none;
+      background: #e2e8f0;
+      border-radius: 10px;
+      outline: none;
+      cursor: pointer;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 22px;
+      height: 22px;
+      background: #2563eb;
+      border-radius: 50%;
+      box-shadow: 0 4px 12px rgba(37,99,235,0.4);
+      border: 2px solid white;
+      transition: 0.1s;
+    }
+
+    .day-input-group {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: #f1f5f9;
+      border-radius: 3rem;
+      padding: 0.3rem 0.3rem 0.3rem 1.2rem;
+    }
+
+    .day-input-group span {
+      font-weight: 500;
+      color: #334155;
+    }
+
+    .day-input-group input {
+      width: 70px;
+      padding: 0.5rem 0.5rem;
+      border: 1px solid #cbd5e1;
+      border-radius: 2rem;
+      text-align: center;
+      font-weight: 600;
+      background: white;
+      font-size: 1rem;
+    }
+
+    .nav-buttons {
+      display: flex;
+      gap: 0.4rem;
+      margin-left: 0.5rem;
+    }
+
+    .btn {
+      background: white;
+      border: 1px solid #d1d5db;
+      padding: 0.5rem 1.1rem;
+      border-radius: 2rem;
+      font-weight: 500;
+      cursor: pointer;
+      background: #ffffff;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 0.2rem;
+      color: #1e293b;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+    }
+
+    .btn:hover {
+      background: #f1f5ff;
+      border-color: #3b82f6;
+      color: #1d4ed8;
+    }
+
+    .btn:active {
+      transform: scale(0.96);
+    }
+
+    .stat-summary {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1.2rem;
+      margin-top: 0.4rem;
+      color: #475569;
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
+
+    @media (max-width: 600px) {
+      body {
+        padding: 0.8rem;
+      }
+      .dashboard {
+        padding: 1.5rem 1rem;
+      }
+      .revenue-highlight {
+        font-size: 2rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="dashboard">
+    <div class="header">
+      <div class="title-section">
+        <h1>
+          📊 小店流水
+          <span>每日动态</span>
+        </h1>
+      </div>
+      <div class="live-indicator">
+        <span class="pulse"></span> 实时数据 · 共 <span id="totalDays">0</span> 天
+      </div>
+    </div>
+
+    <!-- 当前选中日期的营业额卡片 -->
+    <div class="value-card" id="valueCard">
+      <div class="day-badge">
+        <span class="day-label">📅 第</span>
+        <span class="day-number" id="currentDayDisplay">1</span>
+        <span class="day-label">天</span>
+      </div>
+      <div class="revenue-highlight">
+        <small>¥</small><span id="currentRevenue">0</span>
+      </div>
+    </div>
+
+    <!-- 折线图 canvas -->
+    <div class="chart-container">
+      <canvas id="revenueChart" aria-label="每日营业额折线图"></canvas>
+    </div>
+
+    <!-- 控制区域：滑块 + 数字输入 + 按钮 -->
+    <div class="slider-control">
+      <div class="range-wrap">
+        <input type="range" id="daySlider" min="1" value="1" step="1" title="拖动选择日期">
+        <div class="day-input-group">
+          <span>🔢 第</span>
+          <input type="number" id="dayNumberInput" min="1" value="1" step="1">
+          <span>天</span>
+        </div>
+        <div class="nav-buttons">
+          <button class="btn" id="prevDayBtn" title="前一天">◀</button>
+          <button class="btn" id="nextDayBtn" title="后一天">▶</button>
+        </div>
+      </div>
+      <div class="stat-summary">
+        <span>📈 最低: ¥<span id="minRevenue">0</span></span>
+        <span>📉 最高: ¥<span id="maxRevenue">0</span></span>
+        <span>📊 平均: ¥<span id="avgRevenue">0</span></span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      // ---------- 原始营业额数据 (共365个，按顺序第1天~第365天) ----------
+      const rawData = [
+        4401, 7343, 5435, 7883, 7572, 7271, 4117, 3742, 5743, 7972, 5262, 7363, 4591, 5489, 6691,
+        7367, 5110, 7504, 7127, 7418, 5907, 5996, 7880, 5446, 5585, 6880, 5086, 7449, 6156, 5120,
+        3090, 6909, 7122, 4215, 7835, 4565, 5082, 4085, 6856, 5437, 6655, 3394, 5633, 7724, 3278,
+        7830, 7794, 7256, 7256, 3494, 5959, 3396, 3650, 6404, 4531, 7817, 3458, 5655, 4871, 4460,
+        5388, 3496, 6523, 5632, 7143, 7636, 6900, 5178, 4240, 6421, 7440, 4305, 3927, 5120, 5310,
+        6603, 6286, 6187, 4832, 6897, 3035, 6650, 4751, 3589, 5555, 7373, 7112, 6799, 3834, 3576,
+        6620, 7007, 7752, 3575, 3324, 3624, 6337, 7180, 6437, 3683, 7995, 7785, 4916, 4700, 5533,
+        7046, 3561, 4724, 3525, 6728, 6867, 6578, 3203, 3178, 7446, 5745, 4320, 5237, 5115, 5986,
+        5142, 4357, 4418, 3451, 6993, 4822, 5836, 4365, 5641, 4831, 7064, 4119, 5180, 6804, 5724,
+        7351, 3065, 7277, 7239, 4132, 4843, 4927, 3624, 7808, 4424, 5054, 5276, 7166, 7639, 5987,
+        3983, 3141, 6248, 5667, 4497, 6282, 7803, 4710, 3698, 7630, 4679, 6912, 7862, 7091, 3712,
+        6881, 4853, 7450, 3928, 7750, 4668, 3232, 6276, 3189, 3326, 7220, 5004, 5700, 4619, 4000,
+        7038, 5451, 7241, 7367, 4964, 4953, 3176, 4670, 6666, 6252, 4338, 6037, 5387, 6041, 3479,
+        4666, 5767, 7420, 5175, 7654, 5471, 5876, 3323, 7092, 6867, 4798, 3372, 5836, 6263, 6645,
+        7246, 4591, 4651, 3518, 3263, 5991, 7190, 7177, 3443, 4044, 4879, 3208, 5369, 6719, 7413,
+        5481, 7362, 6752, 6743, 4007, 7045, 5576, 4627, 7020, 7323, 7976, 7197, 3972, 6871, 4258,
+        4608, 7606, 5176, 7288, 7800, 4263, 7423, 4528, 6963, 3233, 6935, 3439, 5526, 3175, 6033,
+        6881, 6319, 4238, 4305, 5472, 7765, 4588, 5405, 7774, 3104, 5432, 5309, 6602, 4646, 7530,
+        7011, 3110, 5614, 4781, 7222, 4833, 3166, 7760, 4654, 6736, 7394, 7352, 4625, 6486, 3966,
+        5269, 4748, 3338, 3074, 5422, 5715, 4744, 4607, 4507, 3182, 6962, 6120, 3231, 5002, 6825,
+        3092, 6784, 7228, 3957, 6587, 3825, 5439, 4671, 5278, 5348, 6046, 5299, 5784, 7612, 7485,
+        4656, 5185, 7402, 3973, 6797, 4883, 4993, 6779, 6836, 7812, 3274, 6023, 7259, 5337, 5855,
+        6927, 4597, 5563, 6914, 4032, 4682, 6088, 4358, 5892, 6612, 3729, 5561, 3682, 3975, 7557,
+        3133, 6755, 5276, 4791, 3097, 3955, 5872, 4012, 7810, 6476, 6617, 6343, 5648, 5081, 7641,
+        5656, 6714, 4160, 4408, 4494
+      ];
+
+      // 总天数
+      const TOTAL_DAYS = rawData.length;
+      
+      // 状态变量
+      let currentDay = 1;                // 当前选中的天 (1-based)
+      let chart;                        // Chart.js 实例
+      let animationInterval = null;     // 动态绘制定时器
+      let displayedCount = 0;           // 当前图表中已显示的数据点数量 (从1开始逐渐增加)
+
+      // DOM 元素
+      const daySlider = document.getElementById('daySlider');
+      const dayNumberInput = document.getElementById('dayNumberInput');
+      const currentDayDisplay = document.getElementById('currentDayDisplay');
+      const currentRevenueSpan = document.getElementById('currentRevenue');
+      const totalDaysSpan = document.getElementById('totalDays');
+      const minRevenueSpan = document.getElementById('minRevenue');
+      const maxRevenueSpan = document.getElementById('maxRevenue');
+      const avgRevenueSpan = document.getElementById('avgRevenue');
+      const prevBtn = document.getElementById('prevDayBtn');
+      const nextBtn = document.getElementById('nextDayBtn');
+      const canvas = document.getElementById('revenueChart');
+      const ctx = canvas.getContext('2d');
+
+      // ---------- 工具函数：更新统计摘要 ----------
+      function updateStatistics() {
+        if (!rawData.length) return;
+        const minVal = Math.min(...rawData);
+        const maxVal = Math.max(...rawData);
+        const avgVal = (rawData.reduce((a, b) => a + b, 0) / rawData.length).toFixed(0);
+        minRevenueSpan.textContent = minVal;
+        maxRevenueSpan.textContent = maxVal;
+        avgRevenueSpan.textContent = avgVal;
+      }
+
+      // 根据当前选中天更新UI卡片、滑块、输入框
+      function updateUIForDay(day) {
+        // 边界保护
+        if (day < 1) day = 1;
+        if (day > TOTAL_DAYS) day = TOTAL_DAYS;
+        currentDay = day;
+        
+        // 更新显示
+        currentDayDisplay.textContent = day;
+        const revenueValue = rawData[day - 1];
+        currentRevenueSpan.textContent = revenueValue;
+        
+        // 同步滑块和数字输入框
+        daySlider.value = day;
+        dayNumberInput.value = day;
+        
+        // 更新滑块最大值（确保一致）
+        daySlider.max = TOTAL_DAYS;
+        dayNumberInput.max = TOTAL_DAYS;
+      }
+
+      // 设置图表当前显示的数据点数量 (用于动态绘制)
+      function setChartDisplayCount(count) {
+        if (!chart) return;
+        // count 表示从第1天到第count天的数据
+        const clampedCount = Math.min(Math.max(count, 1), TOTAL_DAYS);
+        displayedCount = clampedCount;
+        
+        // 提取标签和数据
+        const labels = Array.from({ length: clampedCount }, (_, i) => `第${i+1}天`);
+        const dataPoints = rawData.slice(0, clampedCount);
+        
+        // 更新图表数据
+        chart.data.labels = labels;
+        chart.data.datasets[0].data = dataPoints;
+        chart.update();
+      }
+
+      // 动画：从1开始逐步增加数据点，直到覆盖全部天数
+      function startDynamicAnimation() {
+        // 清除之前的动画
+        if (animationInterval) {
+          clearInterval(animationInterval);
+          animationInterval = null;
+        }
+        
+        // 重置显示计数为1（或者从当前显示计数继续？为了效果每次都从1开始动态绘制）
+        // 但为了避免用户已经手动选择，我们仅在初次加载或明确触发时从头动画。
+        // 设计：页面加载后自动从1天动画到全部天数。之后用户操作不再自动触发动画。
+        // 因此这里独立调用。
+        let counter = 1;
+        setChartDisplayCount(1);
+        
+        animationInterval = setInterval(() => {
+          counter++;
+          if (counter > TOTAL_DAYS) {
+            // 动画完成，清除定时器
+            clearInterval(animationInterval);
+            animationInterval = null;
+            // 确保最终显示全部数据
+            setChartDisplayCount(TOTAL_DAYS);
+            // 同时将当前选中天设置为最后一天？不强制，保留用户可能的选择。
+            // 但为了视觉连贯，可以将当前天滑动到最后一天？最好不要覆盖用户操作。
+            // 仅更新图表显示全部数据。
+            return;
+          }
+          setChartDisplayCount(counter);
+        }, 30); // 30ms 每步，约11秒完成365天，流畅动态
+      }
+
+      // 停止动画 (用户手动操作时立即停止)
+      function stopAnimation() {
+        if (animationInterval) {
+          clearInterval(animationInterval);
+          animationInterval = null;
+        }
+      }
+
+      // 根据当前选中的天，设置图表显示范围 (至少显示到该天)
+      function syncChartToSelectedDay() {
+        if (!chart) return;
+        // 停止任何正在进行的动画，避免冲突
+        stopAnimation();
+        
+        // 确保图表至少显示到当前选中的天 (但不能小于当前显示？我们希望图表显示所有数据直到选中天)
+        // 但为了看到完整趋势，最好显示从第1天到当前天（或全部？通常显示到当前天更有针对性）
+        // 设计：图表展示从第1天到当前选中的天（包含所有历史数据），这样用户拖动滑块可以看到趋势增长。
+        const targetCount = currentDay;
+        setChartDisplayCount(targetCount);
+      }
+
+      // 修改当前天（通过滑块、输入、按钮）
+      function changeDay(newDay) {
+        // 边界处理
+        let day = parseInt(newDay, 10);
+        if (isNaN(day) || day < 1) day = 1;
+        if (day > TOTAL_DAYS) day = TOTAL_DAYS;
+        
+        if (day === currentDay) {
+          // 如果相同，仍然确保UI同步
+          updateUIForDay(day);
+          syncChartToSelectedDay();
+          return;
+        }
+        
+        stopAnimation();
+        updateUIForDay(day);
+        syncChartToSelectedDay();
+      }
+
+      // ---------- 初始化图表 ----------
+      function createChart() {
+        // 准备初始数据（全部数据用于结构，但动态控制显示数量）
+        const fullLabels = rawData.map((_, idx) => `第${idx+1}天`);
+        
+        chart = new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels: fullLabels,
+            datasets: [{
+              label: '每日营业额 (¥)',
+              data: [...rawData],
+              borderColor: '#2563eb',
+              backgroundColor: 'rgba(37, 99, 235, 0.08)',
+              borderWidth: 2.8,
+              pointBackgroundColor: '#1e40af',
+              pointBorderColor: 'white',
+              pointRadius: 2.5,
+              pointHoverRadius: 7,
+              tension: 0.2,
+              fill: true,
+              borderJoinStyle: 'round',
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+              tooltip: {
+                callbacks: {
+                  label: (ctx) => ` ¥${ctx.raw.toLocaleString()}`
+                }
+              },
+              legend: {
+                labels: {
+                  usePointStyle: true,
+                  boxWidth: 10,
+                }
+              }
+            },
+            scales: {
+              y: {
+                beginAtZero: false,
+                grid: { color: '#e9eef3' },
+                ticks: {
+                  callback: (val) => '¥' + val
+                }
+              },
+              x: {
+                grid: { display: false },
+                ticks: {
+                  maxTicksLimit: 12,
+                  autoSkip: true,
+                }
+              }
+            },
+            interaction: {
+              intersect: false,
+              mode: 'index'
+            }
+          }
+        });
+        
+        // 初始显示全部数据？但要求动态从开始逐渐出现，所以设置displayedCount=1，然后启动动画。
+        // 但为了用户立即看到动画，我们在页面加载后调用startDynamicAnimation。
+        // 先设置图表显示1个点。
+        setChartDisplayCount(1);
+      }
+
+      // 绑定事件
+      function bindEvents() {
+        // 滑块变化
+        daySlider.addEventListener('input', (e) => {
+          const val = parseInt(e.target.value, 10);
+          changeDay(val);
+        });
+        
+        // 数字输入框
+        dayNumberInput.addEventListener('change', (e) => {
+          let val = parseInt(e.target.value, 10);
+          if (isNaN(val)) val = 1;
+          changeDay(val);
+        });
+        dayNumberInput.addEventListener('keypress', (e) => {
+          if (e.key === 'Enter') {
+            let val = parseInt(e.target.value, 10);
+            if (isNaN(val)) val = 1;
+            changeDay(val);
+          }
+        });
+        
+        // 前一天/后一天按钮
+        prevBtn.addEventListener('click', () => {
+          changeDay(currentDay - 1);
+        });
+        nextBtn.addEventListener('click', () => {
+          changeDay(currentDay + 1);
+        });
+        
+        // 可选：点击图表时也可联动？暂不处理。
+        
+        // 窗口失去焦点时不需要额外操作。
+      }
+
+      // 页面完全加载后的启动流程
+      function initialize() {
+        totalDaysSpan.textContent = TOTAL_DAYS;
+        updateStatistics();
+        
+        // 创建图表
+        createChart();
+        
+        // 设置初始选中天为第1天
+        updateUIForDay(1);
+        
+        // 绑定控件事件
+        bindEvents();
+        
+        // 启动动态绘制动画：从第1天逐渐增加到全部天数
+        // 但注意：动画会覆盖当前选中天的图表显示范围（逐渐增加）。
+        // 符合要求：“从一开始到后面逐渐出现”
+        startDynamicAnimation();
+        
+        // 当动画完成时，图表显示全部数据，用户可自由拖动。
+      }
+
+      // 页面卸载清理定时器
+      window.addEventListener('beforeunload', () => {
+        if (animationInterval) clearInterval(animationInterval);
+      });
+
+      // 启动一切
+      initialize();
+    })();
+  </script>
+</body>
+</html>
