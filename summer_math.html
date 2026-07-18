@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>购物中的数学实践PPT</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4/dist/reveal.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4/dist/theme/white.min.css">
+  <style>
+    table {width:100%;border-collapse: collapse;font-size:16px;}
+    td,th {border:1px solid #666;padding:6px 8px;}
+    th {background:#e6f0ff;}
+    .cost-box {background:#f0f7ff;padding:15px;border-radius:8px;margin:10px 0;text-align:left;}
+    .red-text {color:#d02020;font-weight:bold;font-size:20px;}
+    .bar-wrap {margin:12px 0;text-align:left;}
+    .bar {height:32px;line-height:32px;color:#fff;padding-left:10px;margin:6px 0;}
+    .barA {width:152px;background:#4272c4;}
+    .barB {width:138px;background:#ed7830;}
+  </style>
+</head>
+<body>
+<div class="reveal">
+  <div class="slides">
+    <section>
+      <h2>暑假数学实践活动</h2>
+      <h3>购物中的数学——家庭一周采购</h3>
+    </section>
+    <section>
+      <h3>数据收集与分析</h3>
+      <h4>家庭一周采购清单</h4>
+      <table>
+        <tr>
+          <th>商品名称</th>
+          <th>采购数量</th>
+        </tr>
+        <tr><td>鸡蛋</td><td>30个</td></tr>
+        <tr><td>纯牛奶</td><td>7盒</td></tr>
+        <tr><td>5kg袋装大米</td><td>1袋</td></tr>
+        <tr><td>西红柿</td><td>2kg</td></tr>
+        <tr><td>2kg洗衣液</td><td>1瓶</td></tr>
+        <tr><td>10包抽纸</td><td>1提</td></tr>
+        <tr><td>食用盐</td><td>2袋</td></tr>
+        <tr><td>苹果</td><td>3kg</td></tr>
+      </table>
+    </section>
+    <section>
+      <h3>两家超市价格&优惠信息</h3>
+      <table>
+        <tr>
+          <th>商品</th>
+          <th>A社区超市</th>
+          <th>B大型商超</th>
+        </tr>
+        <tr><td>鸡蛋</td><td>0.8元/个，无折扣</td><td>0.75元/个</td></tr>
+        <tr><td>纯牛奶</td><td>4.5元/盒，8.8折</td><td>4.2元/盒</td></tr>
+        <tr><td>大米5kg</td><td>32元，无折扣</td><td>30元</td></tr>
+        <tr><td>西红柿</td><td>3.2元/kg，8.8折</td><td>3元/kg</td></tr>
+        <tr><td>洗衣液</td><td>28元，无折扣</td><td>26元</td></tr>
+        <tr><td>抽纸</td><td>16元/提，8.8折</td><td>15元/提</td></tr>
+        <tr><td>食盐</td><td>2.5元/袋</td><td>2.3元/袋</td></tr>
+        <tr><td>苹果</td><td>5元/kg</td><td>4.8元/kg</td></tr>
+        <tr>
+          <td>店铺优惠</td>
+          <td>指定商品8.8折，无满减</td>
+          <td>全场满80减10</td>
+        </tr>
+      </table>
+    </section>
+    <section>
+      <h3>数据分析计算 — A超市折后总价</h3>
+      <div class="cost-box">
+        <p>1.鸡蛋：30 × 0.8 = 24 元</p>
+        <p>2.纯牛奶：7×4.5=31.5元 → 31.5×0.88=27.72元</p>
+        <p>3.大米：32 元</p>
+        <p>4.西红柿：2×3.2=6.4元 → 6.4×0.88=5.63元</p>
+        <p>5.洗衣液：28 元</p>
+        <p>6.抽纸：16×0.88=14.08元</p>
+        <p>7.食盐：2×2.5=5 元</p>
+        <p>8.苹果：3×5=15 元</p>
+        <p class="red-text">合计总价：24+27.72+32+5.63+28+14.08+5+15 = 151.43 元</p>
+      </div>
+    </section>
+    <section>
+      <h3>数据分析计算 — B超市满减实付</h3>
+      <div class="cost-box">
+        <p>1.鸡蛋：30×0.75=22.5元</p>
+        <p>2.纯牛奶：7×4.2=29.4元</p>
+        <p>3.大米：30元</p>
+        <p>4.西红柿：2×3=6元</p>
+        <p>5.洗衣液：26元</p>
+        <p>6.抽纸：15元</p>
+        <p>7.食盐：2×2.3=4.6元</p>
+        <p>8.苹果：3×4.8=14.4元</p>
+        <p>原价总和：22.5+29.4+30+6+26+15+4.6+14.4 = 147.5元</p>
+        <p>满80减10，优惠10元</p>
+        <p class="red-text">实际支付：147.5 - 10 = 137.5 元</p>
+      </div>
+    </section>
+    <section>
+      <h3>花费对比图表 & 最终方案</h3>
+      <div class="bar-wrap">
+        <p>A超市总花费：151.43元</p>
+        <div class="bar barA">151.43 元</div>
+        <p>B超市总花费：137.50元</p>
+        <div class="bar barB">137.50 元</div>
+      </div>
+      <div class="cost-box">
+        <p>差价：151.43 - 137.50 = <span class="red-text">13.93元</span></p>
+        <p>结论：一次性采购一周物资，B超市更省钱；若只少量买牛奶、纸巾，A超市打折单品更划算。</p>
+      </div>
+    </section>
+    <section>
+      <h3>心得体会</h3>
+      <ul style="text-align:left;font-size:18px;line-height:1.8;">
+        <li>折扣不等于便宜，要结合单价、满减综合计算；</li>
+        <li>提前列清单、比价，能理性规划家庭预算，减少浪费；</li>
+        <li>用表格、柱状图可以直观对比数据，方便做出最优选择。</li>
+      </ul>
+    </section>
+  </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@4/dist/reveal.min.js"></script>
+<script>
+  Reveal.initialize({
+    controls: true,
+    progress: true,
+    center: true,
+    hash: true,
+    transition: 'slide'
+  });
+</script>
+</body>
+</html>
